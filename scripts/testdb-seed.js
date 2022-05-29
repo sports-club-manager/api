@@ -117,21 +117,33 @@ var news = [
 var feedback = { email: "foo@user.org", body: "Cool tournament app!" };
 var users = [
     {
+        _id: ObjectId("6192470fb26ec0951573f9db"),
+        __v: 0,
         email: "referee@referee.org",
         providerId: "20398234058034958",
         providerName: "google",
+        displayName: "A Ref",
+        photo: "http://example.com/somepic.png",
         roles: ["guest", "tournament_referee"],
     },
     {
+        _id: ObjectId("6192470fb26ec0951573f9dc"),
+        __v: 0,
         email: "admin@admin.org",
         providerId: "20398234058034958",
         providerName: "google",
+        displayName: "Anne Admin",
+        photo: "http://example.com/somepic.png",
         roles: ["guest", "tournament_admin"],
     },
     {
+        _id: ObjectId("6192470fb26ec0951573f9dd"),
+        __v: 0,
         email: "editor@editor.org",
         providerId: "20398234058034958",
         providerName: "google",
+        displayName: "Anne Editor",
+        photo: "http://example.com/somepic.png",
         roles: ["guest", "tournament_editor"],
     },
 ];

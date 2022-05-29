@@ -1,10 +1,11 @@
 require("dotenv").config();
-var request = require("supertest");
-var assert = require("assert");
-var app = require("../server/app").app;
+let request = require("supertest");
+let assert = require("assert");
+let app = require("../server/app").app;
+let { buildTokenFor, addRolesToAclUser } = require("../server/lib/auth");
 
 describe("When using the Tournament API", () => {
-    var newResult = {
+    let newResult = {
         homeTeam: "Foo",
         awayTeam: "Bar",
         competition: {
@@ -20,32 +21,33 @@ describe("When using the Tournament API", () => {
     };
 
     /* common authz */
+    let latestBearerToken = "";
 
-    var authHeader = () => {
+    let authHeader = () => {
         return latestBearerToken !== "" ? "Authorization" : "Dummy";
     };
 
-    var checkCreate = (uri, payload, code, done) => {
+    let checkCreate = (uri, payload, code, done) => {
         request(app)
             .post(uri)
             .set(authHeader(), "Bearer " + latestBearerToken)
             .send(payload)
             .expect(code, done);
     };
-    var checkRead = (uri, code, done) => {
+    let checkRead = (uri, code, done) => {
         request(app)
             .get(uri)
             .set(authHeader(), "Bearer " + latestBearerToken)
             .expect(code, done);
     };
-    var checkUpdate = (uri, payload, code, done) => {
+    let checkUpdate = (uri, payload, code, done) => {
         request(app)
             .put(uri)
             .set(authHeader(), "Bearer " + latestBearerToken)
             .send(payload)
             .expect(code, done);
     };
-    var checkDelete = (uri, payload, code, done) => {
+    let checkDelete = (uri, payload, code, done) => {
         request(app)
             .delete(uri)
             .set(authHeader(), "Bearer " + latestBearerToken)
@@ -127,11 +129,27 @@ describe("When using the Tournament API", () => {
 
     describe("a referee", () => {
         before(() => {
-            latestBearerToken = "";
+            let user = {
+                _id: "6192470fb26ec0951573f9db",
+                email: "referee@referee.org",
+                displayName: "A. Referee",
+                photo: "http://example.com/somepic.png",
+                roles: ["guest", "tournament_referee"],
+            };
+            latestBearerToken = buildTokenFor(user);
+            addRolesToAclUser(user, () => {});
         });
 
-        it("can login with valid credentials", (done) => {
-            authenticator("referee@referee.org", "referee", ["referee"], done);
+        it("can read results", (done) => {
+            checkRead("/tournament/results", 200, done);
+        });
+
+        it("can read news", (done) => {
+            checkRead("/tournament/news", 200, done);
+        });
+
+        it("can read tournament data", (done) => {
+            checkRead("/tournament/tournaments", 200, done);
         });
 
         it("cannot create tournament data", (done) => {
@@ -151,7 +169,7 @@ describe("When using the Tournament API", () => {
         });
 
         it("can update results", (done) => {
-            var result = {};
+            let result = {};
             request(app)
                 .get("/tournament/results?conditions=%7B%22competition.name%22:%22U11%22,%22competition.section%22:%22A%22%7D")
                 .end((err, res) => {
@@ -202,11 +220,27 @@ describe("When using the Tournament API", () => {
 
     describe("an editor", () => {
         before(() => {
-            latestBearerToken = "";
+            let user = {
+                _id: "6192470fb26ec0951573f9dc",
+                email: "editor@editor.org",
+                displayName: "Anne Editor",
+                photo: "http://example.com/somepic.png",
+                roles: ["guest", "tournament_editor"],
+            };
+            latestBearerToken = buildTokenFor(user);
+            addRolesToAclUser(user, () => {});
         });
 
-        it("can login with valid credentials", (done) => {
-            authenticator("editor@editor.org", "editor", ["editor", "referee"], done);
+        it("can read results", (done) => {
+            checkRead("/tournament/results", 200, done);
+        });
+
+        it("can read news", (done) => {
+            checkRead("/tournament/news", 200, done);
+        });
+
+        it("can read tournament data", (done) => {
+            checkRead("/tournament/tournaments", 200, done);
         });
 
         it("can create results", (done) => {
@@ -223,7 +257,7 @@ describe("When using the Tournament API", () => {
         });
 
         it("can confirm league table positions", (done) => {
-            var table = { 0: "A", 1: "B", 2: "C", 3: "D", 4: "E" };
+            let table = { 0: "A", 1: "B", 2: "C", 3: "D", 4: "E" };
             request(app)
                 .post("/tournament/leaguetables/U11/A/2")
                 .set("Authorization", "Bearer " + latestBearerToken)
@@ -235,8 +269,8 @@ describe("When using the Tournament API", () => {
                             "/tournament/results?conditions=%7B%22competition.name%22:%22U11%22,%22competition.section%22:%22A%22%7D"
                         )
                         .expect((res) => {
-                            for (var i = 0; i < res.body.length; i++) {
-                                var r = res.body[i];
+                            for (let i = 0; i < res.body.length; i++) {
+                                let r = res.body[i];
                                 if (r.homeTeamFrom == "U11_A_G2_P1") {
                                     assert.equal(r.homeTeam, table["0"]);
                                 }
@@ -259,7 +293,7 @@ describe("When using the Tournament API", () => {
         });
 
         it("can create an announcement", (done) => {
-            var newsItem = {
+            let newsItem = {
                 title: "editor test",
                 body: "this is an editor announcement",
             };
@@ -271,8 +305,9 @@ describe("When using the Tournament API", () => {
                 .end((err, res) => {
                     request(app)
                         .get("/tournament/news")
+                        .set("Authorization", "Bearer " + latestBearerToken)
                         .expect((res) => {
-                            var latestNews = res.body[res.body.length - 1];
+                            let latestNews = res.body[res.body.length - 1];
                             assert.equal(latestNews.title, newsItem.title);
                             assert.equal(latestNews.body, newsItem.body);
                         })
@@ -286,17 +321,33 @@ describe("When using the Tournament API", () => {
     });
 
     describe("an administrator", () => {
-        var tourney = {
+        let tourney = {
             name: "Test Tournament",
             competitions: [{ name: "comp1", section: "sect1", groups: 1 }],
         };
 
         before(() => {
-            latestBearerToken = "";
+            let user = {
+                _id: "6192470fb26ec0951573f9dd",
+                email: "admin@admin.org",
+                displayName: "Anne Admin",
+                photo: "http://example.com/somepic.png",
+                roles: ["guest", "tournament_admin"],
+            };
+            latestBearerToken = buildTokenFor(user);
+            addRolesToAclUser(user, () => {});            
         });
 
-        it("can login with valid credentials", (done) => {
-            authenticator("admin@admin.org", "admin", ["admin", "editor", "referee"], done);
+        it("can read results", (done) => {
+            checkRead("/tournament/results", 200, done);
+        });
+
+        it("can read news", (done) => {
+            checkRead("/tournament/news", 200, done);
+        });
+
+        it("can read tournament data", (done) => {
+            checkRead("/tournament/tournaments", 200, done);
         });
 
         it("can create tournament data", (done) => {
@@ -304,11 +355,13 @@ describe("When using the Tournament API", () => {
         });
 
         it("cannot delete tournament data", (done) => {
-            checkDelete("/tournament/tournaments", {}, 403, done);
+            // the ACL allows admin to delete, but the method has been
+            // removed from the API so should be 405 not 403 for an admin
+            checkDelete("/tournament/tournaments", {}, 405, done);
         });
 
         it("can create an info page", (done) => {
-            var page = {
+            let page = {
                 title: "page test",
                 body: "page body",
             };
@@ -321,7 +374,7 @@ describe("When using the Tournament API", () => {
                     request(app)
                         .get("/tournament/pages")
                         .expect((res) => {
-                            var latestPage = res.body[res.body.length - 1];
+                            let latestPage = res.body[res.body.length - 1];
                             assert.equal(latestPage.title, page.title);
                             assert.equal(latestPage.body, page.body);
                         })

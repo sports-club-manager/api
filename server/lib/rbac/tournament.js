@@ -32,8 +32,6 @@ module.exports = (acl, apiRoot, roleGuest) => {
                 {
                     roles: [roleGuest],
                     allows: [
-                        //{ resources: [`${apiRoot}/results`], permissions: ["put"] },
-                        //{ resources: [`${apiRoot}/leaguetables`], permissions: ["post"] },
                         {
                             resources: [`${apiRoot}/results`, `${apiRoot}/news`, `${apiRoot}/tournaments`, `${apiRoot}/pages`],
                             permissions: ["get"],

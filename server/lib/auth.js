@@ -2,6 +2,23 @@ const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const { User } = require("../db/auth");
 const { acl, ROLE_GUEST } = require("./rbac");
 const logger = require("log4js").getLogger();
+const jwt = require("jsonwebtoken");
+const jwtSecret = process.env.NODE_ENV == "prod" ? require("crypto").randomBytes(64).toString("base64").slice(0, 64) : "s3cr3t!";
+const jwtExpiresAfter = (process.env.AUTH_JWT_EXPIRES_IN_MINUTES || 30) * 60;
+
+const buildTokenFor = (user) => {
+    return jwt.sign(
+        {
+            sub: user._id,
+            email: user.email,
+            name: user.displayName,
+            picture: user.photo,
+            roles: user.roles,
+        },
+        jwtSecret,
+        { expiresIn: jwtExpiresAfter }
+    );
+};
 
 const findOrCreateUser = (profile, cb) => {
     logger.debug("Profile returned from google", profile);
@@ -37,7 +54,21 @@ const findOrCreateUser = (profile, cb) => {
 
 // Only want the userId for ACL comparisons
 const getUserId = (req) => {
-    let id = req.user ? req.session.passport.user : "anonymous";
+    let id = "anonymous";
+    let authHeader = req.headers.authorization;
+
+    logger.debug(`auth header: ${authHeader}`);
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+        let token = authHeader.split(" ")[1];
+        try {
+            let decoded = jwt.verify(token, jwtSecret);
+            logger.debug(`token decoded as: ${JSON.stringify(decoded)}`);
+            id = decoded.sub;
+        } catch (err) {
+            logger.warn("User token is invalid or expired");
+        }
+    }
+
     logger.debug(`returning user ${id} from getUserId function`);
     return id;
 };
@@ -86,4 +117,6 @@ const init = (passport, authMount) => {
 module.exports = {
     init: init,
     getUserId: getUserId,
+    buildTokenFor: buildTokenFor,
+    addRolesToAclUser: addRolesToAclUser,
 };
