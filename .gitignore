@@ -1,0 +1,12 @@
+.idea
+*.iml
+node_modules
+dist
+.tmp
+*.sw*
+.~lock*
+coverage
+*.log
+.env
+.vscode
+

@@ -1,0 +1,41 @@
+{
+    "name": "@stbgfc/api",
+    "version": "1.0.0",
+    "description": "API for club membership, management and tournaments",
+    "private": true,
+    "author": "STBGFC <admin@stbgfc.co.uk>",
+    "scripts": {
+        "start": "DEBUG=express:x nodemon --watch .env --watch '*.*' server/app.js",
+        "pretest": "mongo stbgfc-test scripts/testdb-seed.js",
+        "test": "DOTENV_CONFIG_PATH=test/.env mocha --exit -s 150ms ./test/*.js -r dotenv/config",
+        "lint": "prettier --check --plugin-search-dir=. . && eslint --ignore-path .gitignore .",
+        "format": "prettier --write --plugin-search-dir=. ."
+    },
+    "dependencies": {
+        "acl2": "^3.0.1",
+        "baucis": "^2.0.6",
+        "cors": "^2.8.5",
+        "dotenv": "^16.0.1",
+        "express": "^4.18.1",
+        "express-session": "^1.17.3",
+        "helmet": "^5.1.0",
+        "jsonwebtoken": "^8.5.1",
+        "log4js": "^6.5.1",
+        "moment-timezone": "^0.5.34",
+        "mongoose": "^5.13.14",
+        "morgan": "^1.10.0",
+        "passport": "^0.6.0",
+        "passport-google-oauth20": "^2.0.0",
+        "passport-jwt": "^4.0.0",
+        "socket.io": "^4.5.1"
+    },
+    "devDependencies": {
+        "assert": "^2.0.0",
+        "eslint": "^8.16.0",
+        "eslint-config-prettier": "^8.5.0",
+        "mocha": "^10.0.0",
+        "nodemon": "^2.0.16",
+        "prettier": "^2.6.2",
+        "supertest": "^6.2.3"
+    }
+}
