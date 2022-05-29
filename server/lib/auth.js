@@ -1,6 +1,6 @@
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const { User } = require("../db/auth");
-const { acl, GUEST } = require("./rbac");
+const { acl, ROLE_GUEST } = require("./rbac");
 const logger = require("log4js").getLogger();
 
 const findOrCreateUser = (profile, cb) => {
@@ -18,7 +18,7 @@ const findOrCreateUser = (profile, cb) => {
                     email: profile.emails[0].value,
                     photo: profile.photos[0].value,
                     displayName: profile.displayName,
-                    roles: [GUEST],
+                    roles: [ROLE_GUEST],
                 },
                 (err, user) => {
                     if (err) {
