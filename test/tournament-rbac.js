@@ -13,7 +13,12 @@ describe("When using the Tournament API RBAC model", () => {
         resource = `/tournament${resource}`;
         acl.isAllowed(user, resource, action, (err, actualResult) => {
             if (err) logger.error(err);
-            logger.debug(`${user} can ${action} ${resource} should be ${expectedResult}. Result is ${actualResult}`);
+            let result = `${user} can ${action} ${resource} should be ${expectedResult}. Result is ${actualResult}`;
+            if (expectedResult !== actualResult) {
+                logger.fatal(result);
+            } else {
+                logger.debug(result);
+            }
             assert.strictEqual(expectedResult, actualResult);
         });
     };
@@ -74,6 +79,28 @@ describe("When using the Tournament API RBAC model", () => {
         });
     });
 
+    it("Should deny editor/admin funtions to referee", (done) => {
+        acl.addUserRoles(userId, ROLE_REFEREE, (err) => {
+            rbacCheck(userId, "/tournaments", "post", false);
+            rbacCheck(userId, "/results", "post", false);
+            rbacCheck(userId, "/news", "post", false);
+            rbacCheck(userId, "/pages", "post", false);
+            rbacCheck(userId, "/tournaments", "put", false);
+            rbacCheck(userId, "/news", "put", false);
+            rbacCheck(userId, "/pages", "put", false);
+            rbacCheck(userId, "/tournaments", "patch", false);
+            rbacCheck(userId, "/results", "patch", false);
+            rbacCheck(userId, "/news", "patch", false);
+            rbacCheck(userId, "/pages", "patch", false);
+            rbacCheck(userId, "/tournaments", "delete", false);
+            rbacCheck(userId, "/results", "delete", false);
+            rbacCheck(userId, "/news", "delete", false);
+            rbacCheck(userId, "/pages", "delete", false);
+            rbacCheck(userId, "/leaguetables", "post", false);
+            done();
+        });
+    });
+
     it("Should allow viewing of public content by editor", (done) => {
         acl.addUserRoles(userId, ROLE_EDITOR, (err) => {
             rbacCheck(userId, "/tournaments", "get", true);
@@ -84,9 +111,27 @@ describe("When using the Tournament API RBAC model", () => {
         });
     });
 
-    it("Should allow editing of results by editor", (done) => {
+    it("Should allow create/edit of results and editor content by editor", (done) => {
         acl.addUserRoles(userId, ROLE_EDITOR, (err) => {
             rbacCheck(userId, "/results", "post", true);
+            rbacCheck(userId, "/results", "delete", true);
+            rbacCheck(userId, "/news", "put", true);
+            rbacCheck(userId, "/news", "post", true);
+            rbacCheck(userId, "/leaguetables", "post", true);
+            done();
+        });
+    });
+
+    it("Should deny admin funtions to editor", (done) => {
+        acl.addUserRoles(userId, ROLE_EDITOR, (err) => {
+            rbacCheck(userId, "/tournaments", "post", false);
+            rbacCheck(userId, "/tournaments", "put", false);
+            rbacCheck(userId, "/tournaments", "patch", false);
+            rbacCheck(userId, "/tournaments", "delete", false);
+            rbacCheck(userId, "/news", "delete", false);
+            rbacCheck(userId, "/pages", "put", false);
+            rbacCheck(userId, "/pages", "post", false);
+            rbacCheck(userId, "/pages", "delete", false);
             done();
         });
     });
@@ -101,9 +146,20 @@ describe("When using the Tournament API RBAC model", () => {
         });
     });
 
-    it("Should allow editing of results by admin", (done) => {
+    it("Should allow editing of results and tournament by admin", (done) => {
         acl.addUserRoles(userId, ROLE_ADMIN, (err) => {
             rbacCheck(userId, "/results", "post", true);
+            rbacCheck(userId, "/tournaments", "post", true);
+            rbacCheck(userId, "/tournaments", "put", true);
+            rbacCheck(userId, "/tournaments", "patch", true);
+            // the RBAC allows the next one, but the API removes the method so will 
+            // result in 405 status if called
+            rbacCheck(userId, "/tournaments", "delete", true);
+            rbacCheck(userId, "/results", "delete", true);
+            rbacCheck(userId, "/news", "delete", true);
+            rbacCheck(userId, "/pages", "put", true);
+            rbacCheck(userId, "/pages", "post", true);
+            rbacCheck(userId, "/pages", "delete", true);
             done();
         });
     });

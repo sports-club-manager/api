@@ -31,7 +31,7 @@ app.use(
     morgan(process.env.API_HTTP_LOG_FORMAT || "dev", {
         stream: {
             write: (str) => {
-                logger.debug(str);
+                logger.info(str);
             },
         },
     })

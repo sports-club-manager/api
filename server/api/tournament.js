@@ -1,5 +1,3 @@
-// TODO: - pass baucis in and leave to the caller to execute it
-
 const baucis = require("baucis");
 const logger = require("log4js").getLogger();
 const eventbus = require("../lib/eventbus");
