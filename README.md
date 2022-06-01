@@ -1,7 +1,5 @@
-# auth-api
+# Sports Club Manager API
 
-`club-manager` module that centralises oauth from several providers, creating
-user records as needed and returning `jwt` to the client for local storage
-and subsequent passing to APIs and front ends as a `Bearer` token.
+Back end API for the various client applications that work to provide the 
+`sports-club-manager` suite of functionality.
 
-## API
