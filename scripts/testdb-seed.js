@@ -114,7 +114,6 @@ var news = [
     { title: "Test announcement 1", body: "this is a test announcement" },
     { title: "Another test announcement", body: "this is another announcement" },
 ];
-var feedback = { email: "foo@user.org", body: "Cool tournament app!" };
 var users = [
     {
         _id: ObjectId("6192470fb26ec0951573f9db"),
@@ -1188,10 +1187,8 @@ db.tournament_tournaments.remove({});
 db.tournament_results.remove({});
 db.tournament_news.remove({});
 db.tournament_pages.remove({});
-db.tournament_feedback.remove({});
 
 db.auth_users.insert(users);
 db.tournament_tournaments.insert(tournament);
 db.tournament_results.insert(results);
 db.tournament_news.insert(news);
-db.tournament_feedback.insert(feedback);
